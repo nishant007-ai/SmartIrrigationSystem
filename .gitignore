@@ -1,0 +1,25 @@
+# Ignore Mac system files
+.DS_Store
+
+# Ignore VS Code settings
+.vscode/
+
+# Ignore compiled Arduino files
+*.hex
+*.elf
+
+# Ignore build folders (if using PlatformIO or Arduino CLI)
+build/
+.pio/
+
+# Ignore logs and temp files
+*.log
+*.tmp
+
+# Ignore backup files
+*~
+*.bak
+
+# Ignore credentials (if using separate config file)
+secrets.h
+credentials.h

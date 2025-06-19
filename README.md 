@@ -1,0 +1,60 @@
+# 🌿 Smart Irrigation System using ESP32 + Blynk + ThingSpeak
+
+An IoT-based smart irrigation system that monitors soil moisture, air quality, temperature, and humidity using ESP32 and DHT11 sensor, while controlling a servo-based water valve. Data is visualized via Blynk app and ThingSpeak cloud platform.
+
+---
+
+## 🔧 Hardware Used
+- ESP32 Board
+- DHT11 Sensor
+- Soil Moisture Sensor
+- Air Quality Sensor
+- Servo Motor
+- WiFi Connectivity
+- Power Supply / Battery
+
+---
+
+## 📱 Features
+- Real-time sensor monitoring via **Blynk**
+- Cloud data logging via **ThingSpeak**
+- Automatic or manual water valve control
+- Non-blocking timer to avoid delays
+
+---
+
+## 🛠️ Software & Libraries
+- Arduino IDE
+- Blynk Library
+- ThingSpeak Library
+- DHT Library
+- ESP32Servo
+- WiFi / WiFiClient
+
+---
+
+## 🌐 Cloud Platforms
+- **Blynk IoT Dashboard**: Real-time data, virtual control
+- **ThingSpeak**: Graphs, logs, API access
+
+---
+
+## 🧪 How It Works
+- ESP32 connects to WiFi
+- Reads data from sensors
+- Sends data to Blynk & ThingSpeak
+- Controls water valve via servo motor
+
+---
+
+## 🔐 Replace Your Own Credentials
+In `main.ino`, change:
+```cpp
+#define BLYNK_AUTH_TOKEN "your_token"
+const char* ssid = "your_wifi";
+const char* password = "your_password";
+const char* myWriteAPIKey = "your_thingspeak_key";
+
+
+> ⚠️ This Smart Irrigation System project is an original work by **Nishant Jadhav**.
+> Unauthorized commercial use, duplication, or modification is strictly prohibited.
