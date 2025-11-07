@@ -54,3 +54,52 @@ export default function App() {
 
   useEffect(() => {
     const updatedSelected = zones.find(z => z.id === selectedZone?.id) || zones[0];
+    setSelectedZone(updatedSelected);
+  }, [zones]);
+
+  function toggleManual(zoneId) {
+    setZones(prev => prev.map(z => z.id === zoneId ? { ...z, status: z.status === "watering" ? "idle" : "watering" } : z));
+    if (selectedZone?.id === zoneId) setManualOn(!manualOn);
+  }
+
+  function addSchedule(zoneId, time, duration) {
+    setSchedule(prev => [...prev, { id: Date.now(), zoneId, time, duration }]);
+  }
+
+  function removeSchedule(id) {
+    setSchedule(prev => prev.filter(s => s.id !== id));
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Header />
+        <div className="grid grid-cols-12 gap-6 mt-6">
+          <aside className="col-span-3 bg-white rounded-2xl p-4 shadow">
+            <h3 className="text-lg font-semibold mb-4">Zones</h3>
+            <div className="space-y-3">
+              {zones.map(z => (
+                <ZoneCard key={z.id} zone={z} onSelect={() => setSelectedZone(z)} onToggle={() => toggleManual(z.id)} selected={selectedZone?.id === z.id} />
+              ))}
+            </div>
+
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-sm font-medium text-slate-600 mb-2">Quick Actions</h4>
+              <div className="flex gap-2">
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "idle" })))} className="flex-1 py-2 rounded-lg bg-emerald-600 text-white">Stop All</button>
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "watering" })))} className="flex-1 py-2 rounded-lg bg-blue-600 text-white">Start All</button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="col-span-6">
+            <div className="bg-white rounded-2xl p-5 shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedZone?.name} <span className="text-sm text-slate-500">— Zone #{selectedZone?.id}</span></h2>
+                  <p className="mt-1 text-sm text-slate-500">Real-time soil moisture and irrigation controls</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                    <Droplet size={18} />
+                    <div className="text-right">
