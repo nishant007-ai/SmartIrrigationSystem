@@ -141,30 +141,4 @@ export default function App() {
                         <div className="text-xs text-slate-500">Toggle manual watering for this zone</div>
                       </div>
                       <button onClick={() => toggleManual(selectedZone.id)} className={`px-4 py-2 rounded-lg ${selectedZone?.status === "watering" ? "bg-red-500 text-white" : "bg-emerald-500 text-white"}`}>
-                        {selectedZone?.status === "watering" ? "Stop" : "Start"}
-                      </button>
-                    </div>
-
-                    <div>
-                      <div className="text-sm font-medium">Schedule</div>
-                      <div className="text-xs text-slate-500">Add a scheduled watering event for this zone</div>
-                      <ScheduleForm onCreate={(time, duration) => addSchedule(selectedZone.id, time, duration)} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6">
-                <h4 className="text-sm font-medium text-slate-600 mb-3">Recent Activity</h4>
-                <div className="space-y-2">
-                  <ActivityRow text={`System checked zone ${selectedZone.name} moisture`} when="2m ago" />
-                  <ActivityRow text={`Automatic schedule activated for Zone 3`} when="1h ago" />
-                  <ActivityRow text={`Manual watering started for Zone 2`} when="3h ago" />
-                </div>
-              </div>
-
-            </div>
-
-            <div className="mt-6 bg-white rounded-2xl p-4 shadow">
-              <h3 className="text-lg font-semibold mb-4">Field Overview</h3>
-      
+                        {selectedZone?.status
