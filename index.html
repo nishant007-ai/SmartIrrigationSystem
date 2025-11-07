@@ -103,22 +103,3 @@ export default function App() {
                   <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
                     <Droplet size={18} />
                     <div className="text-right">
-                      <div className="text-sm text-slate-500">Moisture</div>
-                      <div className="text-lg font-semibold">{selectedZone?.moisture ?? "--"}%</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
-                    <Sun size={18} />
-                    <div className="text-right">
-                      <div className="text-sm text-slate-500">Irrigation</div>
-                      <div className="text-lg font-semibold">{selectedZone?.status}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-slate-50">
-                  <h4 className="text-sm font-medium text-slate-600 mb-2">Moisture Trend (24h)</h4>
-                  <div style={{ height: 180 }}>
-                    <ResponsiveContainer width="100%" height="100%">
