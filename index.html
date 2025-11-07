@@ -1,0 +1,304 @@
+/*
+Smart Irrigation — Single-file React App (Tailwind)
+-------------------------------------------------
+How to use:
+1. Create a new Vite + React project (or CRA) and enable Tailwind CSS.
+2. Save this file as `src/App.jsx` and ensure Tailwind is configured.
+3. Install dependencies (optional but recommended):
+   - npm install lucide-react recharts
+4. Run dev server: npm run dev
+
+Notes:
+- This is a self-contained UI mock (no backend). Sample data and simulated sensor updates are included.
+- The UI uses Tailwind classes. If you don't have Tailwind, the layout will still render but styles will be minimal.
+*/
+
+import React, { useEffect, useState } from "react";
+import {
+  Sun, Droplet, MapPin, Settings, Power, Calendar, Satellite,
+} from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
+
+export default function App() {
+  // Sample sensors state
+  const [zones, setZones] = useState([
+    { id: 1, name: "Front Lawn", moisture: 34, status: "idle", scheduleOn: false },
+    { id: 2, name: "Orchard Row", moisture: 62, status: "idle", scheduleOn: true },
+    { id: 3, name: "Greenhouse", moisture: 25, status: "watering", scheduleOn: false },
+    { id: 4, name: "Backyard", moisture: 48, status: "idle", scheduleOn: false },
+  ]);
+
+  const [selectedZone, setSelectedZone] = useState(zones[0]);
+  const [manualOn, setManualOn] = useState(false);
+  const [schedule, setSchedule] = useState([
+    { id: 1, zoneId: 1, time: "06:00", duration: 15 },
+    { id: 2, zoneId: 3, time: "18:30", duration: 10 },
+  ]);
+
+  // Chart data sample (moisture over time)
+  const sampleChartData = Array.from({ length: 12 }).map((_, i) => ({
+    time: `${i}:00`, moisture: Math.round(30 + 30 * Math.sin(i / 2) + Math.random() * 6),
+  }));
+
+  useEffect(() => {
+    // simulate sensor updates every 6 seconds
+    const t = setInterval(() => {
+      setZones(prev => prev.map(z => ({
+        ...z,
+        moisture: Math.max(12, Math.min(90, Math.round(z.moisture + (Math.random() * 6 - 3)))),
+        status: z.status === "watering" ? (Math.random() > 0.6 ? "idle" : "watering") : (Math.random() > 0.985 ? "fault" : z.status),
+      })));
+    }, 6000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const updatedSelected = zones.find(z => z.id === selectedZone?.id) || zones[0];
+    setSelectedZone(updatedSelected);
+  }, [zones]);
+
+  function toggleManual(zoneId) {
+    setZones(prev => prev.map(z => z.id === zoneId ? { ...z, status: z.status === "watering" ? "idle" : "watering" } : z));
+    if (selectedZone?.id === zoneId) setManualOn(!manualOn);
+  }
+
+  function addSchedule(zoneId, time, duration) {
+    setSchedule(prev => [...prev, { id: Date.now(), zoneId, time, duration }]);
+  }
+
+  function removeSchedule(id) {
+    setSchedule(prev => prev.filter(s => s.id !== id));
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Header />
+        <div className="grid grid-cols-12 gap-6 mt-6">
+          <aside className="col-span-3 bg-white rounded-2xl p-4 shadow">
+            <h3 className="text-lg font-semibold mb-4">Zones</h3>
+            <div className="space-y-3">
+              {zones.map(z => (
+                <ZoneCard key={z.id} zone={z} onSelect={() => setSelectedZone(z)} onToggle={() => toggleManual(z.id)} selected={selectedZone?.id === z.id} />
+              ))}
+            </div>
+
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-sm font-medium text-slate-600 mb-2">Quick Actions</h4>
+              <div className="flex gap-2">
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "idle" })))} className="flex-1 py-2 rounded-lg bg-emerald-600 text-white">Stop All</button>
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "watering" })))} className="flex-1 py-2 rounded-lg bg-blue-600 text-white">Start All</button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="col-span-6">
+            <div className="bg-white rounded-2xl p-5 shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedZone?.name} <span className="text-sm text-slate-500">— Zone #{selectedZone?.id}</span></h2>
+                  <p className="mt-1 text-sm text-slate-500">Real-time soil moisture and irrigation controls</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                    <Droplet size={18} />
+                    <div className="text-right">
+                      <div className="text-sm text-slate-500">Moisture</div>
+                      <div className="text-lg font-semibold">{selectedZone?.moisture ?? "--"}%</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                    <Sun size={18} />
+                    <div className="text-right">
+                      <div className="text-sm text-slate-500">Irrigation</div>
+                      <div className="text-lg font-semibold">{selectedZone?.status}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">Moisture Trend (24h)</h4>
+                  <div style={{ height: 180 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sampleChartData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
+                        <XAxis dataKey="time" />
+                        <YAxis domain={[0, 100]} />
+                        <Tooltip />
+                        <Line type="monotone" dataKey="moisture" stroke="#10b981" strokeWidth={2} dot={false} />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">Controls</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="text-sm font-medium">Manual Water</div>
+                        <div className="text-xs text-slate-500">Toggle manual watering for this zone</div>
+                      </div>
+                      <button onClick={() => toggleManual(selectedZone.id)} className={`px-4 py-2 rounded-lg ${selectedZone?.status === "watering" ? "bg-red-500 text-white" : "bg-emerald-500 text-white"}`}>
+                        {selectedZone?.status === "watering" ? "Stop" : "Start"}
+                      </button>
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-medium">Schedule</div>
+                      <div className="text-xs text-slate-500">Add a scheduled watering event for this zone</div>
+                      <ScheduleForm onCreate={(time, duration) => addSchedule(selectedZone.id, time, duration)} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <h4 className="text-sm font-medium text-slate-600 mb-3">Recent Activity</h4>
+                <div className="space-y-2">
+                  <ActivityRow text={`System checked zone ${selectedZone.name} moisture`} when="2m ago" />
+                  <ActivityRow text={`Automatic schedule activated for Zone 3`} when="1h ago" />
+                  <ActivityRow text={`Manual watering started for Zone 2`} when="3h ago" />
+                </div>
+              </div>
+
+            </div>
+
+            <div className="mt-6 bg-white rounded-2xl p-4 shadow">
+              <h3 className="text-lg font-semibold mb-4">Field Overview</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <SummaryCard title="Total Zones" value={zones.length} icon={<MapPin />} />
+                <SummaryCard title="Zones Watering" value={zones.filter(z => z.status === "watering").length} icon={<Power />} />
+                <SummaryCard title="Avg Moisture" value={`${Math.round(zones.reduce((a,b) => a + b.moisture, 0) / zones.length)}%`} icon={<Droplet />} />
+                <SummaryCard title="Last Sync" value={`Just now`} icon={<Satellite />} />
+              </div>
+            </div>
+
+          </main>
+
+          <aside className="col-span-3">
+            <div className="bg-white p-4 rounded-2xl shadow">
+              <h3 className="text-lg font-semibold mb-3">Schedule</h3>
+              <div className="space-y-2">
+                {schedule.map(s => (
+                  <div key={s.id} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div>
+                      <div className="text-sm font-medium">{zones.find(z => z.id === s.zoneId)?.name || "Zone"} — {s.time}</div>
+                      <div className="text-xs text-slate-500">Duration: {s.duration} min</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => removeSchedule(s.id)} className="px-3 py-1 rounded bg-rose-500 text-white text-sm">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4">
+                <h4 className="text-sm font-medium">Add Quick Schedule</h4>
+                <QuickSchedule zones={zones} onAdd={(zoneId, time, duration) => addSchedule(zoneId, time, duration)} />
+              </div>
+            </div>
+
+            <div className="mt-4 bg-white p-4 rounded-2xl shadow">
+              <h3 className="text-lg font-semibold mb-3">Map (placeholder)</h3>
+              <div className="h-48 rounded-lg bg-gradient-to-br from-sky-50 to-slate-50 flex items-center justify-center text-slate-400">Map / Satellite view placeholder</div>
+            </div>
+
+            <div className="mt-4 bg-white p-4 rounded-2xl shadow">
+              <h3 className="text-lg font-semibold mb-3">Settings</h3>
+              <div className="text-sm text-slate-600">Calibration, alerts, integrations</div>
+              <div className="mt-3 grid grid-cols-1 gap-2">
+                <button className="text-left p-3 rounded-lg border">Sensor Calibration</button>
+                <button className="text-left p-3 rounded-lg border">Alerts & SMS</button>
+                <button className="text-left p-3 rounded-lg border">Integrations</button>
+              </div>
+            </div>
+
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-sky-500 flex items-center justify-center text-white text-xl font-bold">SI</div>
+        <div>
+          <div className="text-sm text-slate-500">Smart Irrigation</div>
+          <div className="font-semibold">Farm Dashboard</div>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-slate-600">Auto Mode</div>
+        <div className="w-12 h-8 bg-slate-100 rounded-full flex items-center justify-center">ON</div>
+        <div className="p-2 rounded-lg bg-white shadow">Admin</div>
+      </div>
+    </header>
+  );
+}
+
+function ZoneCard({ zone, onSelect, onToggle, selected }) {
+  return (
+    <div onClick={onSelect} className={`flex items-center justify-between p-3 rounded-lg border ${selected ? 'ring-2 ring-emerald-300' : ''} cursor-pointer`}>
+      <div>
+        <div className="font-medium">{zone.name}</div>
+        <div className="text-xs text-slate-500">Moisture: {zone.moisture}%</div>
+      </div>
+      <div className="flex flex-col items-end gap-2">
+        <div className={`text-xs px-2 py-1 rounded ${zone.status === 'watering' ? 'bg-rose-200 text-rose-700' : 'bg-slate-100 text-slate-700'}`}>{zone.status}</div>
+        <button onClick={(e) => { e.stopPropagation(); onToggle(); }} className="text-xs px-3 py-1 rounded bg-emerald-500 text-white">Toggle</button>
+      </div>
+    </div>
+  );
+}
+
+function SummaryCard({ title, value, icon }) {
+  return (
+    <div className="p-4 rounded-lg border bg-slate-50 flex items-center justify-between">
+      <div>
+        <div className="text-sm text-slate-500">{title}</div>
+        <div className="text-xl font-semibold">{value}</div>
+      </div>
+      <div className="text-slate-400">{icon}</div>
+    </div>
+  );
+}
+
+function ActivityRow({ text, when }) {
+  return (
+    <div className="flex items-center gap-3 text-sm text-slate-600">
+      <div className="w-2 h-2 rounded-full bg-emerald-400" />
+      <div className="flex-1">{text}</div>
+      <div className="text-xs text-slate-400">{when}</div>
+    </div>
+  );
+}
+
+function ScheduleForm({ onCreate }) {
+  const [time, setTime] = useState("06:00");
+  const [duration, setDuration] = useState(10);
+  function submit(e) {
+    e.preventDefault();
+    onCreate(time, Number(duration));
+    setTime("06:00");
+    setDuration(10);
+  }
+  return (
+    <form onSubmit={submit} className="mt-3 flex gap-2">
+      <input value={time} onChange={e => setTime(e.target.value)} className="px-3 py-2 border rounded w-24" type="time" />
+      <input value={duration} onChange={e => setDuration(e.target.value)} className="px-3 py-2 border rounded w-20" type="number" min={1} />
+      <button className="px-3 py-2 rounded bg-emerald-600 text-white">Add</button>
+    </form>
+  );
+}
+
+function QuickSchedule({ zones, onAdd }) {
+  const [z, setZ] = useState(zones[0]?.id || 1);
+  const [time, setTime] = useState("07:00");
+  const [dur, setDur] = useState(10);
+  return (
