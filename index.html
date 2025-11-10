@@ -36,3 +36,90 @@ export default function App() {
   ]);
 
   // Chart data sample (moisture over time)
+  const sampleChartData = Array.from({ length: 12 }).map((_, i) => ({
+    time: `${i}:00`, moisture: Math.round(30 + 30 * Math.sin(i / 2) + Math.random() * 6),
+  }));
+
+  useEffect(() => {
+    // simulate sensor updates every 6 seconds
+    const t = setInterval(() => {
+      setZones(prev => prev.map(z => ({
+        ...z,
+        moisture: Math.max(12, Math.min(90, Math.round(z.moisture + (Math.random() * 6 - 3)))),
+        status: z.status === "watering" ? (Math.random() > 0.6 ? "idle" : "watering") : (Math.random() > 0.985 ? "fault" : z.status),
+      })));
+    }, 6000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const updatedSelected = zones.find(z => z.id === selectedZone?.id) || zones[0];
+    setSelectedZone(updatedSelected);
+  }, [zones]);
+
+  function toggleManual(zoneId) {
+    setZones(prev => prev.map(z => z.id === zoneId ? { ...z, status: z.status === "watering" ? "idle" : "watering" } : z));
+    if (selectedZone?.id === zoneId) setManualOn(!manualOn);
+  }
+
+  function addSchedule(zoneId, time, duration) {
+    setSchedule(prev => [...prev, { id: Date.now(), zoneId, time, duration }]);
+  }
+
+  function removeSchedule(id) {
+    setSchedule(prev => prev.filter(s => s.id !== id));
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        <Header />
+        <div className="grid grid-cols-12 gap-6 mt-6">
+          <aside className="col-span-3 bg-white rounded-2xl p-4 shadow">
+            <h3 className="text-lg font-semibold mb-4">Zones</h3>
+            <div className="space-y-3">
+              {zones.map(z => (
+                <ZoneCard key={z.id} zone={z} onSelect={() => setSelectedZone(z)} onToggle={() => toggleManual(z.id)} selected={selectedZone?.id === z.id} />
+              ))}
+            </div>
+
+            <div className="mt-6 border-t pt-4">
+              <h4 className="text-sm font-medium text-slate-600 mb-2">Quick Actions</h4>
+              <div className="flex gap-2">
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "idle" })))} className="flex-1 py-2 rounded-lg bg-emerald-600 text-white">Stop All</button>
+                <button onClick={() => setZones(z => z.map(z => ({ ...z, status: "watering" })))} className="flex-1 py-2 rounded-lg bg-blue-600 text-white">Start All</button>
+              </div>
+            </div>
+          </aside>
+
+          <main className="col-span-6">
+            <div className="bg-white rounded-2xl p-5 shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedZone?.name} <span className="text-sm text-slate-500">— Zone #{selectedZone?.id}</span></h2>
+                  <p className="mt-1 text-sm text-slate-500">Real-time soil moisture and irrigation controls</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                    <Droplet size={18} />
+                    <div className="text-right">
+                      <div className="text-sm text-slate-500">Moisture</div>
+                      <div className="text-lg font-semibold">{selectedZone?.moisture ?? "--"}%</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 rounded-lg">
+                    <Sun size={18} />
+                    <div className="text-right">
+                      <div className="text-sm text-slate-500">Irrigation</div>
+                      <div className="text-lg font-semibold">{selectedZone?.status}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl bg-slate-50">
+                  <h4 className="text-sm font-medium text-slate-600 mb-2">Moisture Trend (24h)</h4>
+                  <div style={{ height: 180 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sampleChartData} margin={{ top: 6, right: 6, left: 0, bottom: 0 }}>
